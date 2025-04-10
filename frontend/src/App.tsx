@@ -1,26 +1,14 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import MainLayout from './layouts/MainLayout';
-import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ServicesPage from './pages/ServicesPage';
-import ProfilePage from './pages/ProfilePage';
-import NotFoundPage from './pages/NotFoundPage';
 
-const App: React.FC = () => {
+function App() {
   return (
-    <Routes>
-      <Route path="/" element={<MainLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<RegisterPage />} />
-        <Route path="services" element={<ServicesPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Route>
-    </Routes>
+    <div className="App">
+      <header className="App-header">
+        <h1>Split Laundry Express</h1>
+        <p>Dobrodošli u našu praonicu!</p>
+      </header>
+    </div>
   );
-};
+}
 
-export default App; 
+export default App;
