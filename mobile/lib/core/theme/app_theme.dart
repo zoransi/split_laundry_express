@@ -5,22 +5,13 @@ class AppTheme {
   AppTheme._();
 
   // Brand colors
-  static const Color primaryColor = Color(
-    0xFF0284C7,
-  ); // primary-600 from Tailwind
-  static const Color secondaryColor = Color(
-    0xFF0EA5E9,
-  ); // primary-500 from Tailwind
-  static const Color accentColor = Color(
-    0xFF14B8A6,
-  ); // secondary-500 from Tailwind
+  static const Color primaryColor = Color(0xFF0284C7);
+  static const Color secondaryColor = Color(0xFF64748B);
+  static const Color errorColor = Color(0xFFDC2626);
+  static const Color backgroundColor = Color(0xFFF9FAFB);
 
   // Neutral colors
-  static const Color backgroundColor = Color(
-    0xFFF8FAFC,
-  ); // slate-50 from Tailwind
   static const Color surfaceColor = Colors.white;
-  static const Color errorColor = Color(0xFFEF4444); // red-500 from Tailwind
   static const Color successColor = Color(
     0xFF22C55E,
   ); // green-500 from Tailwind
@@ -40,34 +31,27 @@ class AppTheme {
   ); // slate-400 from Tailwind
 
   // Light theme
-  static ThemeData lightTheme = ThemeData(
+  static final ThemeData lightTheme = ThemeData(
+    useMaterial3: true,
     primaryColor: primaryColor,
-    colorScheme: const ColorScheme.light(
-      primary: primaryColor,
-      secondary: secondaryColor,
-      background: backgroundColor,
-      surface: surfaceColor,
-      error: errorColor,
-      onPrimary: Colors.white,
-      onSecondary: Colors.white,
-      onBackground: textPrimaryColor,
-      onSurface: textPrimaryColor,
-      onError: Colors.white,
-    ),
     scaffoldBackgroundColor: backgroundColor,
     appBarTheme: const AppBarTheme(
       backgroundColor: primaryColor,
       elevation: 0,
       centerTitle: true,
       titleTextStyle: TextStyle(
-        fontFamily: 'Inter',
         fontSize: 20,
         fontWeight: FontWeight.w600,
         color: Colors.white,
       ),
       iconTheme: IconThemeData(color: Colors.white),
     ),
-    fontFamily: 'Inter',
+    colorScheme: ColorScheme.light(
+      primary: primaryColor,
+      secondary: secondaryColor,
+      error: errorColor,
+      background: backgroundColor,
+    ),
     textTheme: const TextTheme(
       displayLarge: TextStyle(
         fontSize: 32,
@@ -107,13 +91,6 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        textStyle: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
@@ -121,7 +98,6 @@ class AppTheme {
         foregroundColor: primaryColor,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         textStyle: const TextStyle(
-          fontFamily: 'Inter',
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
@@ -132,9 +108,10 @@ class AppTheme {
         foregroundColor: primaryColor,
         side: const BorderSide(color: primaryColor),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
         textStyle: const TextStyle(
-          fontFamily: 'Inter',
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),

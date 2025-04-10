@@ -1,22 +1,27 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../core/theme/app_theme.dart';
 import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
-  _SplashScreenState createState() => _SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Simulate a delay for the splash screen
-    Timer(const Duration(seconds: 3), () {
+    _navigateToHome();
+  }
+
+  void _navigateToHome() {
+    Future.delayed(const Duration(seconds: 2), () {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+        ),
       );
     });
   }
@@ -24,44 +29,30 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0284C7), // primary-600 from TailwindCSS
+      backgroundColor: AppTheme.primaryColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Icon(
-                Icons.local_laundry_service,
-                size: 80,
-                color: const Color(0xFF0284C7),
-              ),
-            ),
-            const SizedBox(height: 30),
-            // App name
             const Text(
-              'Split Laundry Express',
+              'Split Laundry',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 28,
+                fontSize: 32,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 10),
-            // Tagline
+            const SizedBox(height: 16),
             const Text(
-              'Fresh & Clean, Delivered',
-              style: TextStyle(color: Colors.white70, fontSize: 16),
+              'Making laundry easier together',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+              ),
             ),
-            const SizedBox(height: 50),
-            // Loading indicator
+            const SizedBox(height: 32),
             const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              color: Colors.white,
             ),
           ],
         ),

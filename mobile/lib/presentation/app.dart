@@ -6,8 +6,6 @@ class AppRoot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // For now, just return the splash screen
-    // In a real app, this would include proper navigation and state management
     return const SplashScreen();
   }
 }
