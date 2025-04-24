@@ -1,26 +1,22 @@
 import axios from 'axios';
 
-// Create an axios instance
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add a request interceptor to include the token in all requests
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+// Add request interceptor for authentication
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
+  return config;
+});
 
 // Add a response interceptor to handle token expiration
 api.interceptors.response.use(
@@ -38,31 +34,67 @@ api.interceptors.response.use(
   }
 );
 
-// Authentication services
-export const authService = {
-  // Register a new user
-  register: async (userData: any) => {
-    const response = await api.post('/auth/register', userData);
-    return response.data;
-  },
+export interface OrderData {
+  serviceId: number;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  pickupDate: string;
+  pickupTime: string;
+  specialInstructions?: string;
+}
 
-  // Login a user
-  login: async (email: string, password: string) => {
-    const response = await api.post('/auth/login', { email, password });
-    
-    // Store token and user data in localStorage
-    if (response.data.data.token) {
-      localStorage.setItem('token', response.data.data.token);
-      localStorage.setItem('isLoggedIn', 'true');
+export const orderService = {
+  createOrder: async (orderData: OrderData) => {
+    try {
+      const response = await api.post('/orders', orderData);
+      return response.data;
+    } catch (error) {
+      throw error;
     }
-    
-    return response.data;
   },
 
-  // Logout a user
+  getOrders: async () => {
+    try {
+      const response = await api.get('/orders');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getOrderById: async (orderId: string) => {
+    try {
+      const response = await api.get(`/orders/${orderId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+};
+
+export const authService = {
+  login: async (email: string, password: string) => {
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  register: async (userData: { name: string; email: string; password: string }) => {
+    try {
+      const response = await api.post('/auth/register', userData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   logout: () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('isLoggedIn');
   },
 
   // Get current user profile
