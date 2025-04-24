@@ -1,291 +1,183 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { orderService } from '../services/api';
+
+interface Order {
+  id: string;
+  serviceId: number;
+  serviceName: string;
+  status: 'pending' | 'processing' | 'completed' | 'cancelled';
+  pickupDate: string;
+  pickupTime: string;
+  totalAmount: number;
+  createdAt: string;
+}
 
 const ProfilePage: React.FC = () => {
-  const [profile, setProfile] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '+385 91 234 5678',
-    address: {
-      street: 'Ulica Kralja Zvonimira 14',
-      city: 'Split',
-      postalCode: '21000',
-      country: 'Croatia',
-    },
-  });
+  const { user, logout } = useAuth();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'profile' | 'orders'>('profile');
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState(profile);
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await orderService.getOrders();
+        setOrders(response.data);
+      } catch (err) {
+        setError('Failed to load orders. Please try again later.');
+        console.error('Error fetching orders:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setFormData({
-        ...formData,
-        [parent]: {
-          ...formData[parent as keyof typeof formData] as Record<string, unknown>,
-          [child]: value,
-        },
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
+    fetchOrders();
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+  };
+
+  const getStatusColor = (status: Order['status']) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'processing':
+        return 'bg-blue-100 text-blue-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setProfile(formData);
-    setIsEditing(false);
-  };
-
-  const recentOrders = [
-    { id: 'ORD-1234', date: '2023-05-15', status: 'Delivered', total: '€24.99' },
-    { id: 'ORD-1235', date: '2023-05-08', status: 'Delivered', total: '€32.50' },
-    { id: 'ORD-1236', date: '2023-05-01', status: 'Delivered', total: '€18.75' },
-  ];
-
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">My Profile</h1>
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white shadow rounded-lg">
+          {/* Tabs */}
+          <div className="border-b border-gray-200">
+            <nav className="flex -mb-px">
+              <button
+                onClick={() => setActiveTab('profile')}
+                className={`py-4 px-6 text-sm font-medium ${
+                  activeTab === 'profile'
+                    ? 'border-b-2 border-primary-500 text-primary-600'
+                    : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Profile
+              </button>
+              <button
+                onClick={() => setActiveTab('orders')}
+                className={`py-4 px-6 text-sm font-medium ${
+                  activeTab === 'orders'
+                    ? 'border-b-2 border-primary-500 text-primary-600'
+                    : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Orders
+              </button>
+            </nav>
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Personal Information</h2>
-              {!isEditing && (
+          {/* Profile Tab */}
+          {activeTab === 'profile' && (
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Profile Information</h2>
                 <button
-                  onClick={() => setIsEditing(true)}
-                  className="text-primary-600 hover:text-primary-800"
+                  onClick={handleLogout}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
-                  Edit
+                  Logout
                 </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Name</label>
+                  <p className="mt-1 text-lg text-gray-900">{user?.name}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <p className="mt-1 text-lg text-gray-900">{user?.email}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Orders Tab */}
+          {activeTab === 'orders' && (
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Order History</h2>
+
+              {isLoading ? (
+                <div className="text-center py-4">Loading orders...</div>
+              ) : error ? (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
+                  {error}
+                </div>
+              ) : orders.length === 0 ? (
+                <div className="text-center py-4 text-gray-500">No orders found.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Order ID
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Service
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Pickup Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Total
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {orders.map((order) => (
+                        <tr key={order.id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            #{order.id}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {order.serviceName}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
+                                order.status
+                              )}`}
+                            >
+                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {new Date(order.pickupDate).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${order.totalAmount.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
-
-            {isEditing ? (
-              <form onSubmit={handleSubmit}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      id="firstName"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      id="lastName"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                      Phone
-                    </label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                </div>
-
-                <h3 className="text-lg font-medium mb-2">Address</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div className="md:col-span-2">
-                    <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-1">
-                      Street Address
-                    </label>
-                    <input
-                      type="text"
-                      id="street"
-                      name="address.street"
-                      value={formData.address.street}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                      City
-                    </label>
-                    <input
-                      type="text"
-                      id="city"
-                      name="address.city"
-                      value={formData.address.city}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700 mb-1">
-                      Postal Code
-                    </label>
-                    <input
-                      type="text"
-                      id="postalCode"
-                      name="address.postalCode"
-                      value={formData.address.postalCode}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
-                      Country
-                    </label>
-                    <input
-                      type="text"
-                      id="country"
-                      name="address.country"
-                      value={formData.address.country}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormData(profile);
-                      setIsEditing(false);
-                    }}
-                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-gray-500">First Name</p>
-                    <p>{profile.firstName}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Last Name</p>
-                    <p>{profile.lastName}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Email</p>
-                    <p>{profile.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Phone</p>
-                    <p>{profile.phone}</p>
-                  </div>
-                </div>
-
-                <h3 className="text-lg font-medium mb-2">Address</h3>
-                <div>
-                  <p>{profile.address.street}</p>
-                  <p>
-                    {profile.address.city}, {profile.address.postalCode}, {profile.address.country}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 className="text-xl font-bold mb-4">Recent Orders</h2>
-            {recentOrders.length > 0 ? (
-              <div className="space-y-4">
-                {recentOrders.map((order) => (
-                  <div key={order.id} className="border-b pb-3 last:border-b-0">
-                    <div className="flex justify-between">
-                      <span className="font-medium">{order.id}</span>
-                      <span className="text-primary-600">{order.total}</span>
-                    </div>
-                    <div className="flex justify-between text-sm text-gray-500">
-                      <span>{order.date}</span>
-                      <span
-                        className={
-                          order.status === 'Delivered' ? 'text-green-600' : 'text-orange-500'
-                        }
-                      >
-                        {order.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                <button className="text-primary-600 hover:text-primary-800 text-sm font-medium mt-2">
-                  View all orders
-                </button>
-              </div>
-            ) : (
-              <p className="text-gray-500">You have no recent orders.</p>
-            )}
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold mb-4">Settings</h2>
-            <div className="space-y-4">
-              <button className="w-full text-left py-2 flex justify-between items-center border-b">
-                <span>Change Password</span>
-                <span className="text-gray-400">➔</span>
-              </button>
-              <button className="w-full text-left py-2 flex justify-between items-center border-b">
-                <span>Notification Preferences</span>
-                <span className="text-gray-400">➔</span>
-              </button>
-              <button className="w-full text-left py-2 flex justify-between items-center border-b">
-                <span>Payment Methods</span>
-                <span className="text-gray-400">➔</span>
-              </button>
-              <button className="w-full text-left py-2 flex justify-between items-center text-red-600">
-                <span>Sign Out</span>
-                <span>➔</span>
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import OrderForm from '../components/OrderForm';
+import React from 'react';
+import { useCart } from '../contexts/CartContext';
+import Cart from '../components/Cart';
 
 interface Service {
   id: number;
@@ -10,7 +11,7 @@ interface Service {
 }
 
 const ServicesPage: React.FC = () => {
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const { addItem } = useCart();
 
   const services: Service[] = [
     {
@@ -57,23 +58,17 @@ const ServicesPage: React.FC = () => {
     },
   ];
 
-  const handleServiceSelect = (service: Service) => {
-    setSelectedService(service);
-  };
-
   return (
     <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold mb-4 text-center">Our Services</h1>
-      <p className="text-gray-600 text-center max-w-2xl mx-auto mb-12">
-        Split Laundry Express offers a range of premium laundry and dry cleaning services
-        tailored to meet your specific needs. All services include free pickup and delivery.
-      </p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <h1 className="text-3xl font-bold mb-4 text-center">Our Services</h1>
+          <p className="text-gray-600 text-center max-w-2xl mx-auto mb-12">
+            Split Laundry Express offers a range of premium laundry and dry cleaning services
+            tailored to meet your specific needs. All services include free pickup and delivery.
+          </p>
 
-      {selectedService ? (
-        <OrderForm selectedService={selectedService} />
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {services.map((service) => (
               <div 
                 key={service.id} 
@@ -89,10 +84,10 @@ const ServicesPage: React.FC = () => {
                 </div>
                 <div className="bg-gray-50 px-6 py-3 flex justify-end">
                   <button 
-                    onClick={() => handleServiceSelect(service)}
+                    onClick={() => addItem(service)}
                     className="text-primary-600 font-medium hover:text-primary-800"
                   >
-                    Add to Order
+                    Add to Cart
                   </button>
                 </div>
               </div>
@@ -120,8 +115,12 @@ const ServicesPage: React.FC = () => {
               </div>
             </div>
           </div>
-        </>
-      )}
+        </div>
+
+        <div className="lg:col-span-1">
+          <Cart />
+        </div>
+      </div>
     </div>
   );
 };

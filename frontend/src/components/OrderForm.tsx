@@ -14,13 +14,13 @@ interface OrderFormProps {
 
 const OrderForm: React.FC<OrderFormProps> = ({ selectedService }) => {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     address: '',
+    city: '',
+    postalCode: '',
     pickupDate: '',
     pickupTime: '',
     specialInstructions: '',
@@ -38,23 +38,33 @@ const OrderForm: React.FC<OrderFormProps> = ({ selectedService }) => {
     e.preventDefault();
     if (!selectedService) return;
 
-    setIsSubmitting(true);
-    setError(null);
-
     try {
       const orderData: OrderData = {
-        serviceId: selectedService.id,
-        ...formData,
+        items: [{
+          serviceId: selectedService.id,
+          quantity: 1
+        }],
+        customerInfo: {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          postalCode: formData.postalCode,
+        },
+        pickupDetails: {
+          date: formData.pickupDate,
+          time: formData.pickupTime,
+          specialInstructions: formData.specialInstructions,
+        },
+        paymentMethod: 'credit_card', // Default payment method
+        totalAmount: parseFloat(selectedService.price.replace(/[^0-9.-]+/g, '')),
       };
 
       const response = await orderService.createOrder(orderData);
-      console.log('Order created:', response);
       navigate('/profile', { state: { orderId: response.id } });
     } catch (err) {
-      setError('Failed to create order. Please try again.');
       console.error('Order submission error:', err);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -66,12 +76,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ selectedService }) => {
         <div className="mb-6 p-4 bg-primary-50 rounded-lg">
           <h3 className="font-semibold">Selected Service</h3>
           <p>{selectedService.title} - {selectedService.price}</p>
-        </div>
-      )}
-
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg">
-          {error}
         </div>
       )}
 
@@ -128,6 +132,32 @@ const OrderForm: React.FC<OrderFormProps> = ({ selectedService }) => {
           />
         </div>
 
+        <div>
+          <label htmlFor="city" className="block text-sm font-medium text-gray-700">City</label>
+          <input
+            type="text"
+            id="city"
+            name="city"
+            value={formData.city}
+            onChange={handleChange}
+            required
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700">Postal Code</label>
+          <input
+            type="text"
+            id="postalCode"
+            name="postalCode"
+            value={formData.postalCode}
+            onChange={handleChange}
+            required
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+          />
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label htmlFor="pickupDate" className="block text-sm font-medium text-gray-700">Pickup Date</label>
@@ -172,12 +202,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ selectedService }) => {
       <div className="mt-6">
         <button
           type="submit"
-          disabled={isSubmitting}
-          className={`w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-            isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
+          className="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
         >
-          {isSubmitting ? 'Submitting...' : 'Place Order'}
+          Place Order
         </button>
       </div>
     </form>

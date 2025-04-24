@@ -34,15 +34,32 @@ api.interceptors.response.use(
   }
 );
 
-export interface OrderData {
+export interface OrderItem {
   serviceId: number;
+  quantity: number;
+}
+
+export interface CustomerInfo {
   name: string;
   email: string;
   phone: string;
   address: string;
-  pickupDate: string;
-  pickupTime: string;
+  city: string;
+  postalCode: string;
+}
+
+export interface PickupDetails {
+  date: string;
+  time: string;
   specialInstructions?: string;
+}
+
+export interface OrderData {
+  items: OrderItem[];
+  customerInfo: CustomerInfo;
+  pickupDetails: PickupDetails;
+  paymentMethod: string;
+  totalAmount: number;
 }
 
 export const orderService = {
