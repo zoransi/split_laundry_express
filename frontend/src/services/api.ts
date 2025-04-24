@@ -1,33 +1,35 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+export type OrderStatus = 'pending' | 'processing' | 'picked_up' | 'cleaning' | 'ready' | 'delivered' | 'cancelled';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000/api',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 // Add request interceptor for authentication
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Add a response interceptor to handle token expiration
-api.interceptors.response.use(
-  (response) => {
-    return response;
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
     if (error.response?.status === 401) {
-      // If the token is expired, log the user out
+      // Handle unauthorized access
       localStorage.removeItem('token');
-      localStorage.removeItem('isLoggedIn');
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -89,6 +91,24 @@ export const orderService = {
       throw error;
     }
   },
+
+  updateOrderStatus: async (orderId: string, status: OrderStatus) => {
+    try {
+      const response = await api.put(`/orders/${orderId}/status`, { status });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getOrderHistory: async (orderId: string) => {
+    try {
+      const response = await api.get(`/orders/${orderId}/history`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 };
 
 export const paymentService = {
@@ -118,6 +138,24 @@ export const paymentService = {
       throw error;
     }
   },
+
+  getPaymentHistory: async (orderId: string) => {
+    try {
+      const response = await api.get(`/payments/history/${orderId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  refundPayment: async (paymentId: string) => {
+    try {
+      const response = await api.post(`/payments/${paymentId}/refund`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 };
 
 export const authService = {
