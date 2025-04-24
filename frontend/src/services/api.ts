@@ -91,6 +91,35 @@ export const orderService = {
   },
 };
 
+export const paymentService = {
+  createPaymentIntent: async (amount: number) => {
+    try {
+      const response = await api.post('/payments/create-intent', { amount });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  confirmPayment: async (paymentIntentId: string) => {
+    try {
+      const response = await api.post(`/payments/confirm/${paymentIntentId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getPaymentStatus: async (paymentIntentId: string) => {
+    try {
+      const response = await api.get(`/payments/status/${paymentIntentId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+};
+
 export const authService = {
   login: async (email: string, password: string) => {
     try {
