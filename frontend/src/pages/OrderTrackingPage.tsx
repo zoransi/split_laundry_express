@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { orderService } from '../services/api';
 import OrderStatus from '../components/OrderStatus';
 import OrderTimeline from '../components/OrderTimeline';
+import CancelOrderButton from '../components/CancelOrderButton';
 
 const OrderTrackingPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -11,26 +12,37 @@ const OrderTrackingPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchOrderData = async () => {
-      try {
-        setLoading(true);
-        const [orderData, historyData] = await Promise.all([
-          orderService.getOrderById(orderId!),
-          orderService.getOrderHistory(orderId!)
-        ]);
-        setOrder(orderData);
-        setHistory(historyData);
-      } catch (err) {
-        setError('Failed to load order data. Please try again later.');
-        console.error('Error fetching order data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchOrderData = async () => {
+    try {
+      setLoading(true);
+      const [orderData, historyData] = await Promise.all([
+        orderService.getOrderById(orderId!),
+        orderService.getOrderHistory(orderId!)
+      ]);
+      setOrder(orderData);
+      setHistory(historyData);
+      setError(null);
+    } catch (err) {
+      setError('Failed to load order data. Please try again later.');
+      console.error('Error fetching order data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchOrderData();
   }, [orderId]);
+
+  const handleCancelOrder = async () => {
+    try {
+      await orderService.cancelOrder(orderId!);
+      await fetchOrderData(); // Refresh the order data
+    } catch (err) {
+      console.error('Error cancelling order:', err);
+      throw err; // Let the CancelOrderButton handle the error
+    }
+  };
 
   if (loading) {
     return (
@@ -117,7 +129,14 @@ const OrderTrackingPage: React.FC = () => {
           </div>
 
           <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Order Progress</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Order Progress</h3>
+              <CancelOrderButton
+                orderId={order.id}
+                currentStatus={order.status}
+                onCancel={handleCancelOrder}
+              />
+            </div>
             <OrderTimeline events={history} />
           </div>
         </div>

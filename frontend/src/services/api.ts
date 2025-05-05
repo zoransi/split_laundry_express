@@ -108,6 +108,15 @@ export const orderService = {
     } catch (error) {
       throw error;
     }
+  },
+
+  cancelOrder: async (orderId: string) => {
+    try {
+      const response = await api.post(`/orders/${orderId}/cancel`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 

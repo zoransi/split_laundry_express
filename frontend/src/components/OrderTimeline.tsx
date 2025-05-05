@@ -14,7 +14,7 @@ interface OrderTimelineProps {
 
 const OrderTimeline: React.FC<OrderTimelineProps> = ({ events, className = '' }) => {
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div data-testid="timeline" className={`space-y-4 ${className}`}>
       {events.map((event, index) => (
         <div key={index} className="flex items-start">
           <div className="flex flex-col items-center mr-4">
