@@ -3,7 +3,7 @@ import axios from 'axios';
 export type OrderStatus = 'pending' | 'processing' | 'picked_up' | 'cleaning' | 'ready' | 'delivered' | 'cancelled';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000/api',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5001/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -255,6 +255,32 @@ export const ordersService = {
     const response = await api.put(`/orders/${id}/cancel`);
     return response.data;
   },
+};
+
+export interface OrderFeedback {
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+export const feedbackService = {
+  submitFeedback: async (orderId: string, feedback: { rating: number; comment: string }) => {
+    try {
+      const response = await api.post(`/orders/${orderId}/feedback`, feedback);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getFeedback: async (orderId: string) => {
+    try {
+      const response = await api.get(`/orders/${orderId}/feedback`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 };
 
 export default api; 

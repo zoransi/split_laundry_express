@@ -4,67 +4,40 @@ const bcrypt = require('bcryptjs');
 /**
  * User model with CRUD operations
  */
-const User = {
+class User {
   /**
    * Create a new user
    * @param {Object} userData - User data object
    * @returns {Object} Created user
    */
-  async create(userData) {
-    const { name, email, password, phone, role = 'customer' } = userData;
-    
-    // Hash the password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    
-    // SQL query to insert a new user
-    const query = `
-      INSERT INTO users (name, email, password, phone, role, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-      RETURNING id, name, email, phone, role, created_at
-    `;
-    
-    const values = [name, email, hashedPassword, phone, role];
-    
-    try {
-      const result = await db.query(query, values);
-      return result.rows[0];
-    } catch (error) {
-      throw error;
-    }
-  },
+  static async create({ name, email, password, phone }) {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const result = await db.query(
+      'INSERT INTO users (name, email, password, phone) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, email, hashedPassword, phone]
+    );
+    return result.rows[0];
+  }
   
   /**
    * Find a user by email
    * @param {String} email - User email
    * @returns {Object|null} User object or null if not found
    */
-  async findByEmail(email) {
-    const query = 'SELECT * FROM users WHERE email = $1';
-    
-    try {
-      const result = await db.query(query, [email]);
-      return result.rows[0] || null;
-    } catch (error) {
-      throw error;
-    }
-  },
+  static async findByEmail(email) {
+    const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    return result.rows[0];
+  }
   
   /**
    * Find a user by ID
    * @param {Number} id - User ID
    * @returns {Object|null} User object or null if not found
    */
-  async findById(id) {
-    const query = 'SELECT id, name, email, phone, role, created_at FROM users WHERE id = $1';
-    
-    try {
-      const result = await db.query(query, [id]);
-      return result.rows[0] || null;
-    } catch (error) {
-      throw error;
-    }
-  },
+  static async findById(id) {
+    const result = await db.query('SELECT * FROM users WHERE id = $1', [id]);
+    return result.rows[0];
+  }
   
   /**
    * Update a user
@@ -72,25 +45,13 @@ const User = {
    * @param {Object} userData - User data to update
    * @returns {Object} Updated user
    */
-  async update(id, userData) {
-    const { name, email, phone } = userData;
-    
-    const query = `
-      UPDATE users
-      SET name = $1, email = $2, phone = $3, updated_at = NOW()
-      WHERE id = $4
-      RETURNING id, name, email, phone, role, created_at
-    `;
-    
-    const values = [name, email, phone, id];
-    
-    try {
-      const result = await db.query(query, values);
-      return result.rows[0];
-    } catch (error) {
-      throw error;
-    }
-  },
+  static async update(id, { name, email, phone }) {
+    const result = await db.query(
+      'UPDATE users SET name = $1, email = $2, phone = $3 WHERE id = $4 RETURNING *',
+      [name, email, phone, id]
+    );
+    return result.rows[0];
+  }
   
   /**
    * Update user password
@@ -98,24 +59,13 @@ const User = {
    * @param {String} password - New password
    * @returns {Boolean} Success status
    */
-  async updatePassword(id, password) {
-    // Hash the password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    
-    const query = `
-      UPDATE users
-      SET password = $1, updated_at = NOW()
-      WHERE id = $2
-    `;
-    
-    try {
-      await db.query(query, [hashedPassword, id]);
-      return true;
-    } catch (error) {
-      throw error;
-    }
-  },
+  static async updatePassword(id, password) {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await db.query(
+      'UPDATE users SET password = $1 WHERE id = $2',
+      [hashedPassword, id]
+    );
+  }
   
   /**
    * Compare password with hashed password in database
@@ -123,9 +73,9 @@ const User = {
    * @param {String} hashedPassword - Hashed password from database
    * @returns {Boolean} True if passwords match
    */
-  async comparePassword(password, hashedPassword) {
-    return await bcrypt.compare(password, hashedPassword);
-  },
+  static async comparePassword(password, hashedPassword) {
+    return bcrypt.compare(password, hashedPassword);
+  }
   
   /**
    * Get all users (admin only)
@@ -133,7 +83,7 @@ const User = {
    * @param {Number} offset - Offset for pagination
    * @returns {Array} Array of users
    */
-  async getAll(limit = 10, offset = 0) {
+  static async getAll(limit = 10, offset = 0) {
     const query = `
       SELECT id, name, email, phone, role, created_at
       FROM users
@@ -147,13 +97,13 @@ const User = {
     } catch (error) {
       throw error;
     }
-  },
+  }
   
   /**
    * Get total count of users
    * @returns {Number} Total count of users
    */
-  async getTotalCount() {
+  static async getTotalCount() {
     const query = 'SELECT COUNT(*) AS total FROM users';
     
     try {
@@ -162,14 +112,14 @@ const User = {
     } catch (error) {
       throw error;
     }
-  },
+  }
   
   /**
    * Delete a user
    * @param {Number} id - User ID
    * @returns {Boolean} Success status
    */
-  async delete(id) {
+  static async delete(id) {
     const query = 'DELETE FROM users WHERE id = $1';
     
     try {
@@ -179,6 +129,6 @@ const User = {
       throw error;
     }
   }
-};
+}
 
 module.exports = User; 

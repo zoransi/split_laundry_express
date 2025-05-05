@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { orderService } from '../services/api';
+import { orderService, feedbackService } from '../services/api';
 import OrderStatus from '../components/OrderStatus';
 import OrderTimeline from '../components/OrderTimeline';
 import CancelOrderButton from '../components/CancelOrderButton';
+import OrderFeedback from '../components/OrderFeedback';
 
 const OrderTrackingPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -11,6 +12,7 @@ const OrderTrackingPage: React.FC = () => {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<any>(null);
 
   const fetchOrderData = async () => {
     try {
@@ -22,6 +24,17 @@ const OrderTrackingPage: React.FC = () => {
       setOrder(orderData);
       setHistory(historyData);
       setError(null);
+
+      // Fetch feedback if order is completed
+      if (orderData.status === 'delivered') {
+        try {
+          const feedbackData = await feedbackService.getFeedback(orderId!);
+          setFeedback(feedbackData);
+        } catch (err) {
+          // Ignore error if feedback doesn't exist yet
+          console.log('No feedback found for this order');
+        }
+      }
     } catch (err) {
       setError('Failed to load order data. Please try again later.');
       console.error('Error fetching order data:', err);
@@ -42,6 +55,11 @@ const OrderTrackingPage: React.FC = () => {
       console.error('Error cancelling order:', err);
       throw err; // Let the CancelOrderButton handle the error
     }
+  };
+
+  const handleSubmitFeedback = async (rating: number, comment: string) => {
+    await feedbackService.submitFeedback(orderId!, { rating, comment });
+    await fetchOrderData(); // Refresh to get the submitted feedback
   };
 
   if (loading) {
@@ -139,6 +157,46 @@ const OrderTrackingPage: React.FC = () => {
             </div>
             <OrderTimeline events={history} />
           </div>
+
+          {order.status === 'delivered' && !feedback && (
+            <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Your Feedback</h3>
+              <OrderFeedback
+                orderId={order.id}
+                onSubmit={handleSubmitFeedback}
+              />
+            </div>
+          )}
+
+          {feedback && (
+            <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Your Feedback</h3>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center mb-2">
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <svg
+                        key={star}
+                        className={`h-5 w-5 ${
+                          star <= feedback.rating ? 'text-yellow-400' : 'text-gray-300'
+                        }`}
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <span className="ml-2 text-sm text-gray-500">
+                    {new Date(feedback.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                {feedback.comment && (
+                  <p className="text-sm text-gray-700">{feedback.comment}</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
