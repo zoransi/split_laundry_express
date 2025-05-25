@@ -1,5 +1,5 @@
-const express = require('express');
-const authRoutes = require('./auth');
+import express from 'express';
+import authRoutes from './auth.mjs';
 
 const router = express.Router();
 
@@ -23,4 +23,4 @@ router.use('*', (req, res) => {
   });
 });
 
-module.exports = router; 
+export default router; 

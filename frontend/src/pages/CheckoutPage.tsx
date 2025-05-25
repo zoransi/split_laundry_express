@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import { orderService } from '../services/api';
 
 const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
-  const { items, totalAmount, clearCart } = useCart();
+  const { items, total, clearCart } = useCart();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -21,10 +19,9 @@ const CheckoutPage: React.FC = () => {
     pickupDate: '',
     pickupTime: '',
     specialInstructions: '',
-    paymentMethod: 'credit_card',
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -34,38 +31,40 @@ const CheckoutPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setIsSubmitting(true);
+    setError(null);
 
     try {
       const orderData = {
         items: items.map(item => ({
-          serviceId: item.service.id,
+          service_id: item.service._id,
           quantity: item.quantity,
+          price: item.service.price
         })),
-        customerInfo: {
+        customer_info: {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
           address: formData.address,
           city: formData.city,
-          postalCode: formData.postalCode,
+          postal_code: formData.postalCode
         },
-        pickupDetails: {
+        pickup_details: {
           date: formData.pickupDate,
           time: formData.pickupTime,
-          specialInstructions: formData.specialInstructions,
+          special_instructions: formData.specialInstructions
         },
-        paymentMethod: formData.paymentMethod,
-        totalAmount,
+        total_amount: total
       };
 
-      const response = await orderService.createOrder(orderData);
+      // TODO: Implement order creation API call
+      console.log('Order data:', orderData);
+
+      // Clear cart and redirect to success page
       clearCart();
-      navigate('/profile', { state: { orderId: response.id } });
+      navigate('/order-success');
     } catch (err) {
-      setError('Failed to place order. Please try again.');
-      console.error('Order submission error:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred while processing your order');
     } finally {
       setIsSubmitting(false);
     }
@@ -100,17 +99,17 @@ const CheckoutPage: React.FC = () => {
               <h2 className="text-xl font-bold mb-4">Order Summary</h2>
               <div className="space-y-4">
                 {items.map((item) => (
-                  <div key={item.service.id} className="flex justify-between">
+                  <div key={item.service._id} className="flex justify-between">
                     <span>
-                      {item.service.title} x {item.quantity}
+                      {item.service.name} x {item.quantity}
                     </span>
-                    <span>${(parseFloat(item.service.price.replace(/[^0-9.-]+/g, '')) * item.quantity).toFixed(2)}</span>
+                    <span>${(item.service.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
                 <div className="border-t pt-4">
                   <div className="flex justify-between font-bold">
                     <span>Total</span>
-                    <span>${totalAmount.toFixed(2)}</span>
+                    <span>${total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -138,7 +137,7 @@ const CheckoutPage: React.FC = () => {
                         id="name"
                         name="name"
                         value={formData.name}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
                         required
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                       />
@@ -150,7 +149,7 @@ const CheckoutPage: React.FC = () => {
                         id="email"
                         name="email"
                         value={formData.email}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
                         required
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                       />
@@ -162,7 +161,7 @@ const CheckoutPage: React.FC = () => {
                         id="phone"
                         name="phone"
                         value={formData.phone}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
                         required
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                       />
@@ -181,7 +180,7 @@ const CheckoutPage: React.FC = () => {
                         id="address"
                         name="address"
                         value={formData.address}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
                         required
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                       />
@@ -194,7 +193,7 @@ const CheckoutPage: React.FC = () => {
                           id="city"
                           name="city"
                           value={formData.city}
-                          onChange={handleChange}
+                          onChange={handleInputChange}
                           required
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                         />
@@ -206,7 +205,7 @@ const CheckoutPage: React.FC = () => {
                           id="postalCode"
                           name="postalCode"
                           value={formData.postalCode}
-                          onChange={handleChange}
+                          onChange={handleInputChange}
                           required
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                         />
@@ -226,7 +225,7 @@ const CheckoutPage: React.FC = () => {
                         id="pickupDate"
                         name="pickupDate"
                         value={formData.pickupDate}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
                         required
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                       />
@@ -238,7 +237,7 @@ const CheckoutPage: React.FC = () => {
                         id="pickupTime"
                         name="pickupTime"
                         value={formData.pickupTime}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
                         required
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                       />
@@ -252,27 +251,11 @@ const CheckoutPage: React.FC = () => {
                       id="specialInstructions"
                       name="specialInstructions"
                       value={formData.specialInstructions}
-                      onChange={handleChange}
+                      onChange={handleInputChange}
                       rows={3}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                     />
                   </div>
-                </div>
-
-                {/* Payment Method */}
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Payment Method</h3>
-                  <select
-                    id="paymentMethod"
-                    name="paymentMethod"
-                    value={formData.paymentMethod}
-                    onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                  >
-                    <option value="credit_card">Credit Card</option>
-                    <option value="paypal">PayPal</option>
-                    <option value="cash">Cash on Delivery</option>
-                  </select>
                 </div>
 
                 <button

@@ -67,28 +67,46 @@ export interface Address {
 }
 
 export interface Order {
-  id?: number;
-  user_id?: number;
+  id: number;
+  user_id: number;
   pickup_address_id: number;
   delivery_address_id: number;
   pickup_time: string;
   delivery_time: string;
-  status?: string;
+  status: OrderStatus;
   total_amount: number;
-  payment_status?: string;
-  payment_method?: string;
+  payment_status: string;
+  payment_method: string;
   notes?: string;
   items: OrderItem[];
+  customer_info: {
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+    city: string;
+    postal_code: string;
+  };
+  pickup_details: {
+    date: string;
+    time: string;
+    special_instructions?: string;
+  };
+  created_at: string;
+  updated_at: string;
 }
 
 export interface OrderTracking {
   id: number;
   order_id: number;
-  status: string;
+  status: OrderStatus;
   location?: string;
   notes?: string;
+  timestamp: string;
   created_at: string;
 }
+
+export type OrderStatus = 'pending' | 'processing' | 'picked_up' | 'cleaning' | 'ready' | 'delivered' | 'cancelled';
 
 // Subscription types
 export interface Subscription {

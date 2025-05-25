@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { orderService, OrderData } from '../services/api';
+import { Order } from '../types';
 
 interface Service {
   id: number;
@@ -41,28 +42,29 @@ const OrderForm: React.FC<OrderFormProps> = ({ selectedService }) => {
     try {
       const orderData: OrderData = {
         items: [{
-          serviceId: selectedService.id,
-          quantity: 1
+          service_id: selectedService.id,
+          quantity: 1,
+          price: parseFloat(selectedService.price.replace(/[^0-9.-]+/g, ''))
         }],
-        customerInfo: {
+        customer_info: {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
           address: formData.address,
           city: formData.city,
-          postalCode: formData.postalCode,
+          postal_code: formData.postalCode,
         },
-        pickupDetails: {
+        pickup_details: {
           date: formData.pickupDate,
           time: formData.pickupTime,
-          specialInstructions: formData.specialInstructions,
+          special_instructions: formData.specialInstructions,
         },
-        paymentMethod: 'credit_card', // Default payment method
-        totalAmount: parseFloat(selectedService.price.replace(/[^0-9.-]+/g, '')),
+        payment_method: 'credit_card', // Default payment method
+        total_amount: parseFloat(selectedService.price.replace(/[^0-9.-]+/g, '')),
       };
 
-      const response = await orderService.createOrder(orderData);
-      navigate('/profile', { state: { orderId: response.id } });
+      const order = await orderService.createOrder(orderData);
+      navigate('/profile', { state: { orderId: order.id } });
     } catch (err) {
       console.error('Order submission error:', err);
     }

@@ -1,19 +1,19 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authService } from '../services/api';
+import { authService, AuthResponse } from '../services/api';
 
 interface User {
-  id: string;
+  id: number;
   name: string;
   email: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,10 +23,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on mount
     const token = localStorage.getItem('token');
     if (token) {
-      // TODO: Implement token validation and user data fetching
+      // TODO: Implement token validation and user fetch
       setIsLoading(false);
     } else {
       setIsLoading(false);
@@ -36,10 +35,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     try {
       const response = await authService.login(email, password);
-      const { token, user } = response.data;
-      localStorage.setItem('token', token);
-      setUser(user);
+      localStorage.setItem('token', response.token);
+      setUser(response.user);
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     }
   };
@@ -47,30 +46,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (name: string, email: string, password: string) => {
     try {
       const response = await authService.register({ name, email, password });
-      const { token, user } = response.data;
-      localStorage.setItem('token', token);
-      setUser(user);
+      localStorage.setItem('token', response.token);
+      setUser(response.user);
     } catch (error) {
+      console.error('Registration error:', error);
       throw error;
     }
   };
 
   const logout = () => {
-    authService.logout();
+    localStorage.removeItem('token');
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        login,
-        register,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={{
+      user,
+      login,
+      register,
+      logout,
+      isAuthenticated: !!user,
+      isLoading
+    }}>
       {children}
     </AuthContext.Provider>
   );

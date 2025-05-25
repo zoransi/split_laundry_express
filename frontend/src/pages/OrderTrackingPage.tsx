@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { orderService, feedbackService } from '../services/api';
+import { Order, OrderTracking } from '../types';
 import OrderStatus from '../components/OrderStatus';
 import OrderTimeline from '../components/OrderTimeline';
 import CancelOrderButton from '../components/CancelOrderButton';
@@ -8,18 +9,20 @@ import OrderFeedback from '../components/OrderFeedback';
 
 const OrderTrackingPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
-  const [order, setOrder] = useState<any>(null);
-  const [history, setHistory] = useState<any[]>([]);
+  const [order, setOrder] = useState<Order | null>(null);
+  const [history, setHistory] = useState<OrderTracking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<any>(null);
 
   const fetchOrderData = async () => {
+    if (!orderId) return;
+    
     try {
       setLoading(true);
       const [orderData, historyData] = await Promise.all([
-        orderService.getOrderById(orderId!),
-        orderService.getOrderHistory(orderId!)
+        orderService.getOrderById(orderId),
+        orderService.getOrderHistory(orderId)
       ]);
       setOrder(orderData);
       setHistory(historyData);
@@ -28,7 +31,7 @@ const OrderTrackingPage: React.FC = () => {
       // Fetch feedback if order is completed
       if (orderData.status === 'delivered') {
         try {
-          const feedbackData = await feedbackService.getFeedback(orderId!);
+          const feedbackData = await feedbackService.getFeedback(orderId);
           setFeedback(feedbackData);
         } catch (err) {
           // Ignore error if feedback doesn't exist yet
@@ -120,7 +123,7 @@ const OrderTrackingPage: React.FC = () => {
               <OrderStatus status={order.status} />
             </div>
             <p className="mt-1 text-sm text-gray-500">
-              Created on {new Date(order.createdAt).toLocaleDateString()}
+              Created on {new Date(order.created_at).toLocaleDateString()}
             </p>
           </div>
           
@@ -129,19 +132,19 @@ const OrderTrackingPage: React.FC = () => {
             <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
               <div>
                 <dt className="text-sm font-medium text-gray-500">Customer</dt>
-                <dd className="mt-1 text-sm text-gray-900">{order.customerInfo.name}</dd>
+                <dd className="mt-1 text-sm text-gray-900">{order.customer_info.name}</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Total Amount</dt>
-                <dd className="mt-1 text-sm text-gray-900">${order.totalAmount.toFixed(2)}</dd>
+                <dd className="mt-1 text-sm text-gray-900">${order.total_amount.toFixed(2)}</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Pickup Date</dt>
-                <dd className="mt-1 text-sm text-gray-900">{new Date(order.pickupDetails.date).toLocaleDateString()}</dd>
+                <dd className="mt-1 text-sm text-gray-900">{new Date(order.pickup_details.date).toLocaleDateString()}</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Pickup Time</dt>
-                <dd className="mt-1 text-sm text-gray-900">{order.pickupDetails.time}</dd>
+                <dd className="mt-1 text-sm text-gray-900">{order.pickup_details.time}</dd>
               </div>
             </dl>
           </div>
@@ -150,7 +153,7 @@ const OrderTrackingPage: React.FC = () => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-medium text-gray-900">Order Progress</h3>
               <CancelOrderButton
-                orderId={order.id}
+                orderId={order.id.toString()}
                 currentStatus={order.status}
                 onCancel={handleCancelOrder}
               />
@@ -162,7 +165,7 @@ const OrderTrackingPage: React.FC = () => {
             <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Your Feedback</h3>
               <OrderFeedback
-                orderId={order.id}
+                orderId={order.id.toString()}
                 onSubmit={handleSubmitFeedback}
               />
             </div>

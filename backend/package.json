@@ -1,31 +1,41 @@
 {
   "name": "split-laundry-express-backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "Backend API for Split Laundry Express",
-  "main": "src/index.js",
+  "main": "src/app.ts",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
+    "dev": "nodemon",
+    "start": "node --experimental-specifier-resolution=node src/index.mjs",
     "test": "jest",
-    "init-db": "node scripts/init-db.js"
+    "init-db": "node scripts/init-db.js",
+    "seed": "node --experimental-specifier-resolution=node seed/services.mjs"
   },
   "dependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/mongoose": "^5.11.96",
     "bcryptjs": "^2.4.3",
+    "compression": "^1.8.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "express-validator": "^7.0.1",
     "helmet": "^7.0.0",
-    "jsonwebtoken": "^9.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.15.0",
     "morgan": "^1.10.0",
     "pg": "^8.10.0",
     "socket.io": "^4.8.1",
     "stripe": "^12.0.0"
   },
   "devDependencies": {
+    "@types/node": "^22.15.21",
     "jest": "^29.5.0",
     "nodemon": "^2.0.22",
-    "supertest": "^6.3.3"
+    "supertest": "^6.3.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   },
   "engines": {
     "node": ">=16.0.0"

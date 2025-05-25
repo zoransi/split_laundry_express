@@ -1,6 +1,22 @@
-import axios from 'axios';
+import axios, { type AxiosRequestConfig } from 'axios';
+import type { Order, OrderTracking } from '../types';
 
 export type OrderStatus = 'pending' | 'processing' | 'picked_up' | 'cleaning' | 'ready' | 'delivered' | 'cancelled';
+
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  status: number;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+  };
+}
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5001/api',
@@ -13,7 +29,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    if (token) {
+    if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -37,8 +53,10 @@ api.interceptors.response.use(
 );
 
 export interface OrderItem {
-  serviceId: number;
+  service_id: number;
   quantity: number;
+  price: number;
+  special_instructions?: string;
 }
 
 export interface CustomerInfo {
@@ -47,46 +65,46 @@ export interface CustomerInfo {
   phone: string;
   address: string;
   city: string;
-  postalCode: string;
+  postal_code: string;
 }
 
 export interface PickupDetails {
   date: string;
   time: string;
-  specialInstructions?: string;
+  special_instructions?: string;
 }
 
 export interface OrderData {
   items: OrderItem[];
-  customerInfo: CustomerInfo;
-  pickupDetails: PickupDetails;
-  paymentMethod: string;
-  totalAmount: number;
+  customer_info: CustomerInfo;
+  pickup_details: PickupDetails;
+  payment_method: string;
+  total_amount: number;
 }
 
 export const orderService = {
-  createOrder: async (orderData: OrderData) => {
+  createOrder: async (orderData: OrderData): Promise<Order> => {
     try {
-      const response = await api.post('/orders', orderData);
-      return response.data;
+      const response = await api.post<ApiResponse<Order>>('/orders', orderData);
+      return response.data.data;
     } catch (error) {
       throw error;
     }
   },
 
-  getOrders: async () => {
+  getOrders: async (): Promise<Order[]> => {
     try {
-      const response = await api.get('/orders');
-      return response.data;
+      const response = await api.get<ApiResponse<Order[]>>('/orders');
+      return response.data.data;
     } catch (error) {
       throw error;
     }
   },
 
-  getOrderById: async (orderId: string) => {
+  getOrderById: async (orderId: string): Promise<Order> => {
     try {
-      const response = await api.get(`/orders/${orderId}`);
-      return response.data;
+      const response = await api.get<ApiResponse<Order>>(`/orders/${orderId}`);
+      return response.data.data;
     } catch (error) {
       throw error;
     }
@@ -101,10 +119,10 @@ export const orderService = {
     }
   },
 
-  getOrderHistory: async (orderId: string) => {
+  getOrderHistory: async (orderId: string): Promise<OrderTracking[]> => {
     try {
-      const response = await api.get(`/orders/${orderId}/history`);
-      return response.data;
+      const response = await api.get<ApiResponse<OrderTracking[]>>(`/orders/${orderId}/history`);
+      return response.data.data;
     } catch (error) {
       throw error;
     }
@@ -168,19 +186,19 @@ export const paymentService = {
 };
 
 export const authService = {
-  login: async (email: string, password: string) => {
+  login: async (email: string, password: string): Promise<AuthResponse> => {
     try {
-      const response = await api.post('/auth/login', { email, password });
-      return response.data;
+      const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', { email, password });
+      return response.data.data;
     } catch (error) {
       throw error;
     }
   },
 
-  register: async (userData: { name: string; email: string; password: string }) => {
+  register: async (userData: { name: string; email: string; password: string }): Promise<AuthResponse> => {
     try {
-      const response = await api.post('/auth/register', userData);
-      return response.data;
+      const response = await api.post<ApiResponse<AuthResponse>>('/auth/register', userData);
+      return response.data.data;
     } catch (error) {
       throw error;
     }

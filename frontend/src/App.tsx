@@ -14,6 +14,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import OrderTracking from './components/OrderTracking';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ServiceCatalog from './pages/ServiceCatalog';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -45,7 +46,7 @@ const App: React.FC = () => {
                 <Route path="login" element={<LoginPage />} />
                 <Route path="register" element={<RegisterPage />} />
                 <Route path="forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="services" element={<ServicesPage />} />
+                <Route path="services" element={<ServiceCatalog />} />
                 <Route
                   path="profile"
                   element={

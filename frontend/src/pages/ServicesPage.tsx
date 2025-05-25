@@ -1,62 +1,56 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCart } from '../contexts/CartContext';
 import Cart from '../components/Cart';
-
-interface Service {
-  id: number;
-  title: string;
-  description: string;
-  price: string;
-  icon: string;
-}
+import { Service } from '../types/service.types';
+import { serviceApi } from '../api/serviceApi';
+import ServiceCard from '../components/ServiceCard';
 
 const ServicesPage: React.FC = () => {
   const { addItem } = useCart();
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const services: Service[] = [
-    {
-      id: 1,
-      title: 'Wash & Fold',
-      description: 'Our most popular service. We wash, dry, and fold your everyday clothes.',
-      price: '$1.50 per pound',
-      icon: '👕',
-    },
-    {
-      id: 2,
-      title: 'Dry Cleaning',
-      description: 'Professional dry cleaning for your delicate garments, suits, and formal wear.',
-      price: 'Starting at $3.99 per item',
-      icon: '👔',
-    },
-    {
-      id: 3,
-      title: 'Ironing Service',
-      description: 'Get your clothes perfectly pressed and ready to wear.',
-      price: '$2.00 per item',
-      icon: '🧥',
-    },
-    {
-      id: 4,
-      title: 'Bedding & Linens',
-      description: 'Cleaning for sheets, pillowcases, duvet covers, and other household linens.',
-      price: 'Starting at $5.99 per item',
-      icon: '🛏️',
-    },
-    {
-      id: 5,
-      title: 'Express Service',
-      description: 'Same-day turnaround for when you need your laundry in a rush.',
-      price: '+50% of standard price',
-      icon: '⚡',
-    },
-    {
-      id: 6,
-      title: 'Eco-Friendly Cleaning',
-      description: 'Environmentally friendly cleaning options using biodegradable detergents.',
-      price: '+10% of standard price',
-      icon: '🌿',
-    },
-  ];
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+        const data = await serviceApi.getServices();
+        setServices(data);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load services. Please try again later.');
+        console.error('Error fetching services:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong className="font-bold">Error!</strong>
+            <span className="block sm:inline"> {error}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -70,27 +64,7 @@ const ServicesPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {services.map((service) => (
-              <div 
-                key={service.id} 
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-              >
-                <div className="p-6">
-                  <div className="text-4xl mb-4">{service.icon}</div>
-                  <h2 className="text-xl font-bold mb-2">{service.title}</h2>
-                  <p className="text-gray-600 mb-4">{service.description}</p>
-                  <div className="mt-auto">
-                    <span className="text-primary-600 font-semibold">{service.price}</span>
-                  </div>
-                </div>
-                <div className="bg-gray-50 px-6 py-3 flex justify-end">
-                  <button 
-                    onClick={() => addItem(service)}
-                    className="text-primary-600 font-medium hover:text-primary-800"
-                  >
-                    Add to Cart
-                  </button>
-                </div>
-              </div>
+              <ServiceCard key={service._id} service={service} />
             ))}
           </div>
 

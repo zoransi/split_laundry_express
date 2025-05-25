@@ -1,22 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { orderService } from '../services/api';
-
-interface Order {
-  id: string;
-  serviceId: number;
-  serviceName: string;
-  status: 'pending' | 'processing' | 'completed' | 'cancelled';
-  pickupDate: string;
-  pickupTime: string;
-  totalAmount: number;
-  createdAt: string;
-}
+import { Order } from '../types';
 
 const ProfilePage: React.FC = () => {
   const { user, logout } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'orders'>('profile');
 
@@ -24,12 +14,13 @@ const ProfilePage: React.FC = () => {
     const fetchOrders = async () => {
       try {
         const response = await orderService.getOrders();
-        setOrders(response.data);
+        setOrders(response);
+        setError(null);
       } catch (err) {
         setError('Failed to load orders. Please try again later.');
         console.error('Error fetching orders:', err);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
@@ -45,8 +36,11 @@ const ProfilePage: React.FC = () => {
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
       case 'processing':
+      case 'picked_up':
+      case 'cleaning':
+      case 'ready':
         return 'bg-blue-100 text-blue-800';
-      case 'completed':
+      case 'delivered':
         return 'bg-green-100 text-green-800';
       case 'cancelled':
         return 'bg-red-100 text-red-800';
@@ -116,7 +110,7 @@ const ProfilePage: React.FC = () => {
             <div className="p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Order History</h2>
 
-              {isLoading ? (
+              {loading ? (
                 <div className="text-center py-4">Loading orders...</div>
               ) : error ? (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
@@ -126,54 +120,47 @@ const ProfilePage: React.FC = () => {
                 <div className="text-center py-4 text-gray-500">No orders found.</div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Order ID
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Service
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Pickup Date
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Total
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {orders.map((order) => (
-                        <tr key={order.id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            #{order.id}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {order.serviceName}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                                order.status
-                              )}`}
-                            >
-                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {new Date(order.pickupDate).toLocaleDateString()}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            ${order.totalAmount.toFixed(2)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  {orders.map((order) => (
+                    <div key={order.id} className="bg-white shadow rounded-lg p-6 mb-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            Order #{order.id}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            Placed on {new Date(order.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
+                          {order.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <div className="mt-4">
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">Pickup:</span>{' '}
+                          {new Date(order.pickup_time).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">Delivery:</span>{' '}
+                          {new Date(order.delivery_time).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">Total Amount:</span>{' '}
+                          ${order.total_amount.toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="mt-4">
+                        <h4 className="text-sm font-medium text-gray-900">Items:</h4>
+                        <ul className="mt-2 space-y-2">
+                          {order.items.map((item) => (
+                            <li key={item.id} className="text-sm text-gray-600">
+                              {item.quantity}x {item.service_id} - ${item.price.toFixed(2)}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
